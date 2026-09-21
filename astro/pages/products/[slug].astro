@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { products } from '../../data/products.js';
+export function getStaticPaths() { return products.map((product) => ({ params: { slug: product.slug }, props: { product } })); }
+const { product } = Astro.props;
+const structuredData = { '@context': 'https://schema.org', '@type': 'Product', name: product.name, description: product.description, sku: product.sku, offers: { '@type': 'Offer', priceCurrency: 'AED', price: String(product.price), availability: 'https://schema.org/InStock' } };
+---
+<BaseLayout title={`${product.name} | USSUS Med`} description={product.description}>
+  <Fragment slot="head"><script type="application/ld+json" set:html={JSON.stringify(structuredData)} /></Fragment>
+  <div class="shell product-page"><p class="breadcrumbs"><a href="/">Home</a><span>/</span><a href="/products/">Products</a><span>/</span> {product.name}</p><section class="product-detail"><div class="detail-image"><img src={product.image} alt={product.name} width="720" height="720" /></div><div class="detail-copy"><p class="kicker">{product.category}</p><p class="product-sku">SKU: {product.sku}</p><h1>{product.name}</h1><p class="detail-intro">{product.description}</p><p class="detail-price"><span data-price-aed={product.price}>AED {product.price.toLocaleString()}</span> <span>per unit</span></p><div class="stock-line"><span></span>{product.stock} and ready to order</div><div class="order-actions"><a class="button button-primary" href={`mailto:orders@ussusmed.com?subject=${encodeURIComponent(`${product.name} order`)}`}>Request this product</a><button class="button button-secondary add-button" type="button" data-product={product.name}>Add to cart</button></div><p class="order-note">Need a bulk quantity? <a href={`mailto:orders@ussusmed.com?subject=${encodeURIComponent(`${product.name} quote`)}`}>Request a clinic quotation.</a></p></div></section><section class="product-information"><div><h2>Designed for clinical work.</h2><p>{product.description}</p></div><dl>{product.details.map((detail, index) => <div><dt>{['Specification', 'Use', 'Compatibility'][index]}</dt><dd>{detail}</dd></div>)}</dl></section></div>
+</BaseLayout>

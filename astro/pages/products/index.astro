@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { products, categories } from '../../data/products.js';
+---
+<BaseLayout title="Dental supplies catalogue | USSUS Med" description="Browse USSUS Med dental consumables, implant prosthetics, digital dentistry equipment, and orthodontic supplies.">
+  <section class="catalogue-hero"><div class="shell"><p class="breadcrumbs"><a href="/">Home</a><span>/</span> Catalogue</p><p class="kicker">USSUS Med catalogue</p><h1>Dental supplies, arranged for the way you work.</h1><p>Explore clinic essentials, implant prosthetics, digital equipment, and orthodontic supplies.</p></div></section>
+  <section class="shell section catalogue-layout"><aside class="catalogue-sidebar"><h2>Product families</h2>{categories.map((category) => <a class="filter-link" href={`#${category.toLowerCase().replaceAll(' ', '-')}`}>{category}</a>)}</aside><div class="catalogue-content"><div class="catalogue-toolbar"><div><p class="kicker">Available to order</p><h2>Featured supplies</h2></div><p>{products.length} products</p></div>{categories.map((category) => <section class="catalogue-group" id={category.toLowerCase().replaceAll(' ', '-')}><h2>{category}</h2><div class="catalogue-grid">{products.filter((product) => product.category === category).map((product) => <ProductCard product={product} />)}</div></section>)}</div></section>
+  <section class="quote-strip"><div class="shell"><div><p class="kicker">Need a bulk order?</p><h2>Send us your list. We’ll prepare a clear quotation.</h2></div><a class="button button-primary" href="mailto:orders@ussusmed.com?subject=USSUS%20Med%20quote%20request">Request a quote</a></div></section>
+</BaseLayout>
