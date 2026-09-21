@@ -3,9 +3,10 @@ const navigation = document.querySelector('.site-nav');
 const cartCount = document.querySelector('.cart-count');
 const cartLink = document.querySelector('.cart-link');
 const toast = document.querySelector('.cart-toast');
-const currencyRates = { AED: 1, USD: 1 / 3.6725, SAR: 3.75 / 3.6725, QAR: 3.64 / 3.6725 };
-const regionCurrency = { AE: 'AED', SA: 'SAR', QA: 'QAR' };
-const timeZoneCurrency = { 'Asia/Dubai': 'AED', 'Asia/Riyadh': 'SAR', 'Asia/Qatar': 'QAR' };
+const currencyRates = { AED: 1, USD: 1 / 3.6725, SAR: 3.75 / 3.6725, QAR: 3.64 / 3.6725, OMR: 1 / 9.538713, JOD: 1 / 5.179831, SYP: 1 / 0.030102, BHD: 1 / 9.741379, KWD: 1 / 11.948918 };
+const regionCurrency = { AE: 'AED', SA: 'SAR', QA: 'QAR', OM: 'OMR', JO: 'JOD', SY: 'SYP', BH: 'BHD', KW: 'KWD' };
+const timeZoneCurrency = { 'Asia/Dubai': 'AED', 'Asia/Riyadh': 'SAR', 'Asia/Qatar': 'QAR', 'Asia/Muscat': 'OMR', 'Asia/Amman': 'JOD', 'Asia/Damascus': 'SYP', 'Asia/Bahrain': 'BHD', 'Asia/Kuwait': 'KWD' };
+const currencyFractionDigits = { AED: 0, SAR: 0, QAR: 0, USD: 2, OMR: 3, JOD: 3, BHD: 3, KWD: 3, SYP: 0 };
 let count = 0;
 
 function detectedCurrency() {
@@ -18,7 +19,7 @@ function detectedCurrency() {
 }
 
 function renderCurrency(currency) {
-  const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: currency === 'USD' ? 2 : 0 });
+  const formatter = new Intl.NumberFormat(undefined, { style: 'currency', currency, minimumFractionDigits: currencyFractionDigits[currency], maximumFractionDigits: currencyFractionDigits[currency] });
   document.querySelectorAll('[data-price-aed]').forEach((price) => {
     price.textContent = formatter.format(Number(price.dataset.priceAed) * currencyRates[currency]);
   });
@@ -30,7 +31,7 @@ function installCurrencySelector() {
     const selector = document.createElement('select');
     selector.className = 'currency-selector';
     selector.setAttribute('aria-label', 'Display currency');
-    [['AED', 'AED'], ['SAR', 'SAR'], ['QAR', 'QAR'], ['USD', 'USD']].forEach(([value, label]) => selector.add(new Option(label, value)));
+    [['AED', 'AED'], ['SAR', 'SAR'], ['QAR', 'QAR'], ['OMR', 'OMR'], ['JOD', 'JOD'], ['SYP', 'SYP'], ['BHD', 'BHD'], ['KWD', 'KWD'], ['USD', 'USD']].forEach(([value, label]) => selector.add(new Option(label, value)));
     selector.value = currency;
     selector.addEventListener('change', () => { window.localStorage.setItem('ussus_currency', selector.value); renderCurrency(selector.value); });
     button.after(selector);
