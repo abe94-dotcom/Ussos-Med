@@ -8,3 +8,19 @@ export const products = [
 ];
 
 export const categories = [...new Set(products.map((product) => product.category))];
+
+// Explicit labels prevent unrelated attributes being presented as compatibility.
+const specifications = {
+  'sis-scanbody-ti': [['Material', 'Titanium'], ['Use', 'Intraoral and extraoral implant scanning'], ['Compatibility', 'Provide your implant system and connection for confirmation before ordering.']],
+  'sis-smart-tibase-engaging': [['Material', 'Titanium Ti-6Al-4V Grade 5'], ['Coating', 'BIOGOLD'], ['Height options', 'H2, H3 and H4'], ['Compatibility', 'Implant system and connection must be confirmed by our team.']],
+  'intraoral-scanner-v3-pro': [['Use', 'Intraoral scanning'], ['Workflow', 'Confirm supported CAD/CAM software with our team.'], ['Support', 'Ask for technical specifications, warranty and training details.']],
+  'nitrile-exam-gloves-m-200': [['Pack size', '200 gloves'], ['Material', 'Powder-free, latex-free nitrile'], ['Size', 'Medium']],
+  'self-ligating-brackets': [['Design', 'Self-ligating'], ['Use', 'Orthodontic treatment'], ['Configuration', 'Confirm prescription, slot size and pack contents before ordering.']],
+  'cad-cam-milling-block': [['Material', 'Zirconia'], ['Use', 'Crown and bridge restorations'], ['Configuration', 'Confirm shade, dimensions and machine compatibility before ordering.']],
+};
+products.forEach(product => {
+  product.specifications = specifications[product.slug];
+  product.unit = product.slug === 'nitrile-exam-gloves-m-200' ? 'per pack of 200' : 'per unit';
+  product.heights = product.slug === 'sis-smart-tibase-engaging' ? ['H2', 'H3', 'H4'] : [];
+  product.needsSystem = product.category === 'Implant prosthetics';
+});
