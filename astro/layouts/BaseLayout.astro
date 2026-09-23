@@ -1,23 +1,74 @@
 ---
 import '../styles/site.css';
-const { title = 'USSUS Med | Dental supplies for modern practice', description = 'Dental supplies for modern practice.' } = Astro.props;
+import { copy, alternateLocale, localePath } from '../data/i18n.js';
+const {
+  title = 'USSUS Med | Dental supplies for modern practice',
+  description = 'Dental supplies for modern practice.',
+  image = '/images/ussus-logo.jpg',
+  noindex = false,
+  openGraphType = 'website',
+  locale = 'en',
+} = Astro.props;
+const t = copy[locale];
+const siteUrl = Astro.site || new URL('https://ussusmed.com');
+const canonicalUrl = new URL(Astro.url.pathname, siteUrl);
+const imageUrl = new URL(image, siteUrl);
+const localizedPath = Astro.url.pathname.replace(/^\/(en|ar)(?=\/|$)/, '') || '/';
+const otherLocale = alternateLocale(locale);
+const alternateUrl = new URL(localePath(otherLocale, localizedPath), siteUrl);
+const organization = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'USSUS Med',
+  url: siteUrl.href,
+  logo: new URL('/images/ussus-logo.jpg', siteUrl).href,
+  email: 'orders@ussusmed.com',
+  description: locale === 'ar' ? 'مستلزمات ومعدات طب الأسنان للعيادات في دبي والإمارات.' : 'Dental supplies for modern practices.',
+};
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'USSUS Med',
+  url: siteUrl.href,
+  inLanguage: t.language,
+  publisher: { '@id': `${siteUrl.href}#organization` },
+};
+organization['@id'] = `${siteUrl.href}#organization`;
+const isHomePage = localizedPath === '/';
 ---
 <!doctype html>
-<html lang="en">
+<html lang={t.language} dir={t.dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#06244c" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow'} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang={t.language} href={canonicalUrl} />
+    <link rel="alternate" hreflang={copy[otherLocale].language} href={alternateUrl} />
+    <link rel="alternate" hreflang="x-default" href={new URL(localePath('en', localizedPath), siteUrl)} />
+    <meta property="og:type" content={openGraphType} />
+    <meta property="og:locale" content={t.locale} />
+    <meta property="og:site_name" content="USSUS Med" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
     <title>{title}</title>
+    <script type="application/ld+json" set:html={JSON.stringify(organization)} />
+    {isHomePage && <script type="application/ld+json" set:html={JSON.stringify(website)} />}
     <slot name="head" />
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    <header class="site-header"><div class="shell header-inner"><a class="brand" href="/" aria-label="USSUS Med home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span class="wordmark">USSUS<span>med</span></span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="sr-only">Open menu</span><span></span><span></span></button><nav class="site-nav" id="site-menu" aria-label="Main navigation"><a href="/products/">Products</a><a href="/products/#categories">Categories</a><a href="/#for-clinics">For clinics</a><a href="#contact">Contact</a></nav><div class="header-actions"><select class="currency-selector" aria-label="Display currency"><option value="AED">AED</option><option value="USD">USD (est.)</option><option value="SAR">SAR (est.)</option><option value="QAR">QAR (est.)</option><option value="OMR">OMR (est.)</option><option value="JOD">JOD (est.)</option><option value="SYP">SYP (est.)</option><option value="BHD">BHD (est.)</option><option value="KWD">KWD (est.)</option></select><a class="cart-link" href="/quote/" aria-label="Quote basket, 0 items">Quote <span class="cart-count" aria-live="polite">0</span></a></div></div></header>
-    <main id="main-content"><slot /></main><noscript><p class="shell">The quote basket requires JavaScript. Email your product names and quantities to <a href="mailto:orders@ussusmed.com">orders@ussusmed.com</a>.</p></noscript>
-    <footer class="site-footer" id="contact"><div class="shell footer-grid"><div><a class="footer-brand" href="/">USSUS <span>med</span></a><p>Dental supplies for clinics that care about precision.</p></div><div><h2>Start an order</h2><a href="mailto:orders@ussusmed.com">orders@ussusmed.com</a><a href="/quote/">Prepare a quote request</a><p>Delivery area, timing, taxes and shipping charges are confirmed in your quotation.</p></div><div><h2>Quick links</h2><a href="/products/">Products</a><a href="/products/#categories">Categories</a><a href="/#for-clinics">For clinics</a></div></div><div class="shell footer-bottom"><span>© 2026 USSUS Med</span><span>Precision, in every detail.</span></div></footer>
+    <a class="skip-link" href="#main-content">{locale === 'ar' ? 'انتقل إلى المحتوى' : 'Skip to content'}</a>
+    <header class="site-header"><div class="shell header-inner"><a class="brand" href={localePath(locale)} aria-label="USSUS Med home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span class="wordmark">USSUS<span>med</span></span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span class="sr-only">{locale === 'ar' ? 'فتح القائمة' : 'Open menu'}</span><span></span><span></span></button><nav class="site-nav" id="site-menu" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Main navigation'}><a href={localePath(locale, '/products/')}>{t.nav.products}</a><a href={localePath(locale, '/products/#categories')}>{t.nav.categories}</a><a href={`${localePath(locale) }#for-clinics`}>{t.nav.clinics}</a><a href="#contact">{t.nav.contact}</a></nav><div class="header-actions"><a class="language-switch" href={localePath(otherLocale, localizedPath)} aria-label={t.switchAria}>{t.switchLabel}</a><select class="currency-selector" aria-label={locale === 'ar' ? 'عملة العرض' : 'Display currency'}><option value="AED">AED</option><option value="USD">USD</option><option value="SAR">SAR</option><option value="QAR">QAR</option><option value="OMR">OMR</option><option value="JOD">JOD</option><option value="BHD">BHD</option><option value="KWD">KWD</option></select><a class="cart-link" href={localePath(locale, '/quote/')} aria-label={`${t.nav.quote}, 0`}>{t.nav.quote} <span class="cart-count" aria-live="polite">0</span></a></div></div></header>
+    <main id="main-content"><slot /></main><noscript><p class="shell">{locale === 'ar' ? 'تتطلب سلة عرض السعر JavaScript. أرسل أسماء المنتجات وكمياتها إلى ' : 'The quote basket requires JavaScript. Email your product names and quantities to '}<a href="mailto:orders@ussusmed.com">orders@ussusmed.com</a>.</p></noscript>
+    <footer class="site-footer" id="contact"><div class="shell footer-grid"><div><a class="footer-brand" href={localePath(locale)}>USSUS <span>med</span></a><p>{t.common.footer}</p></div><div><h2>{t.common.order}</h2><a href="mailto:orders@ussusmed.com">orders@ussusmed.com</a><a href={localePath(locale, '/quote/')}>{t.common.quoteRequest}</a><p>{locale === 'ar' ? 'يتم تأكيد منطقة التسليم والموعد والضرائب ورسوم الشحن في عرض السعر.' : 'Delivery area, timing, taxes and shipping charges are confirmed in your quotation.'}</p></div><div><h2>{t.common.quickLinks}</h2><a href={localePath(locale, '/products/')}>{t.nav.products}</a><a href={localePath(locale, '/products/#categories')}>{t.nav.categories}</a><a href={localePath(locale, '/about/')}>{t.common.about}</a><a href={localePath(locale, '/privacy/')}>{t.common.privacy}</a><a href={localePath(locale, '/terms/')}>{t.common.terms}</a></div></div><div class="shell footer-bottom"><span>© 2026 USSUS Med</span><span>{locale === 'ar' ? 'الدقة في كل التفاصيل.' : 'Precision, in every detail.'}</span></div></footer>
     <div class="cart-toast" role="status" aria-live="polite"></div>
     <script>import '../scripts/storefront.js';</script>
   </body>

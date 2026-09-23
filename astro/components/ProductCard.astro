@@ -1,4 +1,7 @@
 ---
 const { product } = Astro.props;
+const { locale = 'en' } = Astro.props;
+const base = `/${locale}`;
+const labels = locale === 'ar' ? { view: 'عرض المنتج', perPack: 'للعبوة (200 قطعة)', perUnit: 'للقطعة' } : { view: 'View product', perPack: 'per pack of 200', perUnit: 'per unit' };
 ---
-<article class="catalogue-card"><a class="card-image" href={`/products/${product.slug}/`}><img src={product.image} alt={product.name} width="420" height="320" loading="lazy" /></a><div class="card-copy"><p class="card-family">{product.category}</p><h3><a href={`/products/${product.slug}/`}>{product.name}</a></h3><p>{product.description}</p><div class="card-bottom"><div><strong data-price-aed={product.price}>AED {product.price.toLocaleString()}</strong><small>{product.unit}</small></div><a class="button button-secondary" href={`/products/${product.slug}/`}>View product <span aria-hidden="true">↗</span></a></div></div></article>
+<article class="catalogue-card"><a class="card-image" href={`${base}/products/${product.slug}/`}><img src={product.image} alt={product.name} width="420" height="320" loading="lazy" /></a><div class="card-copy"><p class="card-family">{product.category}</p><h3><a href={`${base}/products/${product.slug}/`}>{product.name}</a></h3><p>{product.description}</p><div class="card-bottom"><div><strong data-price-aed={product.price}>AED {product.price.toLocaleString()}</strong><small>{product.slug === 'nitrile-exam-gloves-m-200' ? labels.perPack : labels.perUnit}</small></div><a class="button button-secondary" href={`${base}/products/${product.slug}/`}>{labels.view} <span aria-hidden="true">↗</span></a></div></div></article>

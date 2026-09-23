@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { locales, copy, localePath } from '../../data/i18n.js';
+import { getProducts, getCategories } from '../../data/localized-products.js';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const { locale } = Astro.params;
+const t = copy[locale]; const products = getProducts(locale); const categories = getCategories(locale);
+const landing = locale === 'ar' ? {
+  eyebrow: 'مستلزمات طب الأسنان في دبي',
+  title: 'اطلب المستلزمات المناسبة لعيادتك، بثقة.',
+  intro: 'مكوّنات الزرعات والحلول الرقمية والمستهلكات اليومية. اختر ما تحتاجه، ثم اطلب عرض سعر واضحاً بالدرهم الإماراتي.',
+  primary: 'استعرض المنتجات', secondary: 'اطلب عرض سعر',
+  proof: ['فريق مبيعات في دبي', 'الأسعار بالدرهم الإماراتي', 'نؤكد التوفر قبل الطلب'],
+  fields: 'تسوّق حسب احتياج عيادتك', fieldsText: 'ابدأ بالفئة التي تعمل عليها اليوم.',
+  processEyebrow: 'طلب واضح، بخطوات بسيطة', processTitle: 'من المنتج إلى عرض السعر.',
+  steps: [['اختر المنتجات', 'أضف المنتجات والكميات التي تحتاجها.'], ['اذكر التفاصيل', 'أدخل نظام الزرعات أو أي متطلبات مهمة.'], ['راجع عرض السعر', 'نؤكد التوافق والتوفر والتفاصيل قبل الطلب.']],
+  selected: 'منتجات مختارة للعيادات.', all: 'استعرض كل المنتجات',
+  closeTitle: 'جاهز لتجهيز طلبك؟', closeText: 'ابدأ بالكتالوج أو أرسل متطلبات عيادتك مباشرةً.',
+} : {
+  eyebrow: 'Dental supplies in Dubai',
+  title: 'The right supplies for your clinic, with confidence.',
+  intro: 'Implant components, digital solutions, and everyday essentials. Select what you need, then request a clear AED quotation.',
+  primary: 'Browse products', secondary: 'Request a quote',
+  proof: ['Dubai-based sales team', 'AED pricing', 'Availability confirmed before ordering'],
+  fields: 'Shop by what your clinic needs', fieldsText: 'Start with the field you are working in today.',
+  processEyebrow: 'A clear order, in three steps', processTitle: 'From product to quotation.',
+  steps: [['Choose products', 'Add the products and quantities you need.'], ['Share the details', 'Add your implant system or any important requirements.'], ['Review your quote', 'We confirm compatibility, availability, and the details before ordering.']],
+  selected: 'Selected for modern clinics.', all: 'View all products',
+  closeTitle: 'Ready to prepare your order?', closeText: 'Start with the catalogue or send us your clinic requirements directly.',
+};
+const anchor = category => category === 'مكوّنات الزرعات السنية' ? 'implant-prosthetics' : category === 'الحلول الرقمية' ? 'digital-solutions' : category === 'المستهلكات' ? 'consumables' : category === 'تقويم الأسنان' ? 'orthodontics' : category.toLowerCase().replaceAll(' ', '-');
+const families = [
+ { image: '/images/sis_tibase.png', text: locale === 'ar' ? 'مكوّنات لترميمات الزرعات السنية.' : 'Components for implant restoration.' },
+ { image: '/images/featured_scanner.jpg', text: locale === 'ar' ? 'أساسيات المسح وCAD/CAM.' : 'Scanning and CAD/CAM essentials.' },
+ { image: '/images/bestseller_gloves.jpg', text: locale === 'ar' ? 'المستلزمات اليومية لعيادتك.' : 'Everyday essentials for your clinic.' },
+ { image: '/images/mosaic_brackets.jpg', text: locale === 'ar' ? 'مستلزمات علاج تقويم الأسنان.' : 'Supplies for orthodontic treatment.' },
+];
+const scannerCopy = locale === 'ar' ? {
+  eyebrow: 'طب الأسنان الرقمي، بشكل عملي', title: 'شاهد الخطوة التالية في سير عمل عيادتك.', intro: 'حل مسح رقمي متخصص لفرق الأسنان التي تضع الدقة وتجربة المريض والدعم المستمر في مقدمة أولوياتها.', demo: 'احجز عرضًا تجريبيًا', students: 'لطلاب طب الأسنان', studentTitle: 'ابدأ رحلتك الرقمية بفهم حقيقي.', studentText: 'لا يحتاج الطالب إلى كتالوج معقّد. يحتاج إلى بداية واضحة مع التقنيات التي تشكّل ممارسة طب الأسنان الحديثة.'
+} : {
+  eyebrow: 'Digital dentistry, made practical', title: 'See the next step in your workflow.', intro: 'A focused digital-scanning solution for dental teams that value precision, a simpler patient experience, and support that continues after installation.', demo: 'Book a demonstration', students: 'For dental students', studentTitle: 'Start digital with context.', studentText: 'Students do not need a complicated catalogue. They need a clear first step into the techniques shaping modern dental practice.'
+};
+---
+<BaseLayout locale={locale} title={locale === 'ar' ? 'يوسُس ميد | مستلزمات طب الأسنان في دبي والإمارات' : 'USSUS Med | Dental supplies in Dubai & UAE'} description={locale === 'ar' ? 'مستلزمات طب الأسنان ومكونات الزرعات والمعدات الرقمية للعيادات في دبي والإمارات.' : 'Dental supplies, implant prosthetics and digital equipment for clinics in Dubai and the UAE.'}>
+<section class="hero scanner-hero"><div class="shell hero-grid"><div class="hero-copy"><p class="kicker">{scannerCopy.eyebrow}</p><h1>{scannerCopy.title}</h1><p class="hero-intro">{scannerCopy.intro}</p><div class="hero-actions"><a class="button button-primary" href={localePath(locale, '/quote/')}>{scannerCopy.demo}</a><a class="text-link" href="#students">{scannerCopy.students}</a></div></div><a class="hero-product" href={localePath(locale, '/products/intraoral-scanner-v3-pro/')} aria-label="Intraoral scanner"><img src="/images/featured_scanner.jpg" alt={locale === 'ar' ? 'ماسح داخل الفم' : 'Intraoral scanner'} width="720" height="720" fetchpriority="high" /><div class="hero-caption"><div><span>{locale === 'ar' ? 'الحلول الرقمية' : 'Digital solutions'}</span><h2>{locale === 'ar' ? 'الماسح داخل الفم' : 'Intraoral scanner'}</h2></div><span class="round-link" aria-hidden="true">↗</span></div></a></div><div class="shell proof-strip">{scannerCopy.demo && landing.proof.map(item => <span>{item}</span>)}</div></section>
+<section class="section categories" id="categories"><div class="shell"><div class="section-heading"><h2>{landing.fields}</h2><p>{landing.fieldsText}</p></div><div class="category-grid">{categories.map((category,index) => <a class="category-card" href={localePath(locale, `/products/#${anchor(category)}`)}><div class="category-image"><img src={families[index].image} alt="" width="420" height="320" loading="lazy" /></div><div class="category-copy"><h3>{category}<span aria-hidden="true">↗</span></h3><p>{families[index].text}</p></div></a>)}</div></div></section>
+<section class="order-path section"><div class="shell"><div class="section-heading"><div><p class="kicker">{landing.processEyebrow}</p><h2>{landing.processTitle}</h2></div></div><ol class="order-steps">{landing.steps.map(([title, text], index) => <li><span>{index + 1}</span><h3>{title}</h3><p>{text}</p></li>)}</ol></div></section>
+<section class="students-note section" id="students"><div class="shell students-grid"><img src="/images/hero_handpiece.jpg" alt="" loading="lazy"/><div><p class="kicker">{scannerCopy.students}</p><h2>{scannerCopy.studentTitle}</h2><p>{scannerCopy.studentText}</p><a class="text-link" href={localePath(locale, '/quote/')}>{scannerCopy.demo} <span aria-hidden="true">↗</span></a></div></div></section>
+<section class="section products"><div class="shell"><div class="section-heading"><div><h2>{landing.selected}</h2></div><a class="text-link" href={localePath(locale, '/products/')}>{landing.all} <span aria-hidden="true">↗</span></a></div><div class="product-grid">{products.slice(0,3).map(product => <ProductCard product={product} locale={locale} />)}</div><p class="collection-note">{t.common.priced}</p></div></section>
+<section class="clinic-note section" id="for-clinics"><div class="shell clinic-grid"><div><h2>{landing.closeTitle}</h2></div><div class="clinic-copy"><p>{landing.closeText}</p><a class="button button-light" href={localePath(locale, '/quote/')}>{landing.secondary}</a></div></div></section>
+</BaseLayout>

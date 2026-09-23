@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { locales, copy, localePath } from '../../data/i18n.js';
+export function getStaticPaths() { return locales.flatMap(locale => ['about', 'privacy', 'terms'].map(page => ({ params: { locale, page } }))); }
+const { locale, page } = Astro.params; const ar = locale === 'ar'; const t = copy[locale];
+const content = ar ? {
+ about: ['عن يوسس ميد', 'مستلزمات دقيقة للعيادات الحديثة في دبي والإمارات.', 'يوسس ميد هو كتالوج وخدمة عرض أسعار لمستلزمات طب الأسنان، ومكوّنات الزرعات، والحلول الرقمية، ومنتجات تقويم الأسنان والمستهلكات.'],
+ privacy: ['سياسة الخصوصية', 'معلوماتك موضحة بوضوح.', 'نستخدم بياناتك فقط لتجهيز طلب عرض السعر الذي تختار إرساله إلينا. تبقى سلة المنتجات في متصفحك لتسهيل عودتك إليها.'],
+ terms: ['شروط الاستخدام', 'شروط الكتالوج وطلب عرض السعر.', 'أوصاف المنتجات والأسعار الإرشادية تساعد العيادات على طلب عرض سعر وليست عرض بيع نهائياً. نؤكد التوفر والتوافق والسعر النهائي قبل قبول الطلب.'],
+} : {
+ about: ['About USSUS Med', 'Supplies for the detail-driven practice.', 'USSUS Med is a catalogue and quotation service for dental clinics sourcing implant prosthetics, digital solutions, orthodontic supplies, and consumables.'],
+ privacy: ['Privacy policy', 'Your information, clearly explained.', 'We use your details only to prepare the quote request you choose to send. Product selections remain in your browser so your basket is available when you return.'],
+ terms: ['Terms of use', 'Catalogue and quotation terms.', 'Product descriptions and reference prices help clinics request a quotation; they are not a final offer to sell. Availability, compatibility, and final pricing are confirmed before an order is accepted.'],
+}; const [label, heading, body] = content[page];
+---
+<BaseLayout locale={locale} title={`${label} | USSUS Med`} description={body} noindex={page !== 'about'}><article class="shell quote-page"><p class="kicker">{label}</p><h1>{heading}</h1><p class="detail-intro">{body}</p><section class="product-information"><div><h2>{ar ? 'تواصل معنا' : 'Contact us'}</h2><p>{ar ? 'للاستفسارات، راسلنا على' : 'For questions, email'} <a href="mailto:orders@ussusmed.com">orders@ussusmed.com</a>.</p></div><dl><div><dt>{ar ? 'الكتالوج' : 'Catalogue'}</dt><dd><a href={localePath(locale, '/products/')}>{ar ? 'استعرض منتجاتنا ومستلزمات عيادتك.' : 'Browse our products and clinic supplies.'}</a></dd></div></dl></section></article></BaseLayout>
