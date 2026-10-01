@@ -10,7 +10,8 @@ The July 2026 full-stack starter is a source of feature ideas, not a replacement
 
 - The homepage now leads with the wider clinic and lab catalogue while retaining the existing visual design and featured scanner.
 - English and Arabic category cards open filtered catalogue views. Catalogue search accepts product names and SKUs; implant product forms capture height, system, and optional platform/connection details in the quote basket.
-- The quote flow still prepares an email in the visitor's email app. A real receiving service, stored staff queue, and delivery confirmation remain the next implementation step. The destination and hosting choice must be settled before enabling submission.
+- The quote flow now opens a prepared email draft in the visitor's email app after two required contact fields; the visitor still has to send it. A real receiving service, stored staff queue, and delivery confirmation remain the next implementation step. The destination and hosting choice must be settled before enabling submission.
+- English is the language for all generated quote emails, staff quotations, receipts, and customer communications, including requests started from the Arabic website.
 - Catalogue management, clinic accounts, and direct checkout remain later stages with the operational prerequisites below.
 
 ## Stage 1 — Better product discovery and quote requests

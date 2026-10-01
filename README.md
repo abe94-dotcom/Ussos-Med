@@ -30,6 +30,8 @@ npm run build
 
 The deployable site is generated in `dist/`. Product prices use AED as their source currency; the browser can display the configured regional currencies for reference, but the final Zoho invoice should remain in AED.
 
+Product names always use the English catalogue names in both languages. Arabic routes translate the surrounding interface, categories, and descriptions. Generated quote emails and future customer documents use English.
+
 ## Public URL policy
 
 The only indexable website URLs are prefixed with a language:
@@ -43,6 +45,6 @@ Unprefixed legacy paths redirect to their English equivalents in `astro.config.m
 
 ## Quotation workflow
 
-Product options and quantities are saved in the browser under `ussus_quote_v1`. The `/en/quote/` and `/ar/quote/` pages support quantity changes, removal, item subtotals and an email request preview. Contact details are not saved in local storage. Requests are prepared locally; the visitor must send the email using their own email service. Copy and text-download options are available when email-app handoff is unavailable. No server-side submission or delivery confirmation is configured.
+Product options and quantities are saved in the browser under `ussus_quote_v1`. The `/en/quote/` and `/ar/quote/` pages support quantity changes, removal, item subtotals and an email request preview. Contact details are not saved in local storage. Submitting the form opens a prepared draft in the visitor’s email app; the visitor must send it there. Copy and text-download options remain available when email-app handoff is unavailable. Generated quote emails use English in both site languages. No server-side submission or delivery confirmation is configured.
 
 AED is the billing currency. Other currencies use fixed reference conversions and are explicitly labelled estimates. Availability, compatibility, tax, shipping and delivery timing require confirmation in the quotation. Replace these statements with verified operational information when available.
