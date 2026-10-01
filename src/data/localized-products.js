@@ -15,3 +15,9 @@ export function getProducts(locale) {
 
 export function getProduct(locale, slug) { return getProducts(locale).find((product) => product.slug === slug); }
 export function getCategories(locale) { return [...new Set(getProducts(locale).map((product) => product.category))]; }
+export function getCategoryFilters(locale) {
+  return [...new Map(getProducts(locale).map((product) => [product.category, {
+    label: product.category,
+    slug: products.find((source) => source.slug === product.slug).category.toLowerCase().replaceAll(' ', '-'),
+  }])).values()];
+}

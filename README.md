@@ -13,6 +13,8 @@ In the local workspace, a separate `project-files/` folder holds retired site ar
 
 See [repository rules](AGENTS.md) for what belongs in Git and the checks to make before publishing.
 
+The staged path from the current quotation storefront to accounts and possible direct ordering is in the [storefront plan](docs/commerce-roadmap.md).
+
 ## Run locally
 
 ```bash
