@@ -11,6 +11,8 @@ SEO-first dental supplies storefront built with Astro. Astro compiles the pages 
 
 In the local workspace, a separate `project-files/` folder holds retired site art and marketing files. It is outside this Git repository and is not needed to build the site.
 
+See [repository rules](AGENTS.md) for what belongs in Git and the checks to make before publishing.
+
 ## Run locally
 
 ```bash
