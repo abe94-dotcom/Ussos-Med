@@ -19,6 +19,4 @@ export default defineConfig({
     '/products/self-ligating-brackets/': { destination: '/en/products/self-ligating-brackets/', status: 301 },
     '/products/cad-cam-milling-block/': { destination: '/en/products/cad-cam-milling-block/', status: 301 },
   },
-  srcDir: './astro',
-  publicDir: './public',
 });

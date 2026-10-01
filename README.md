@@ -1,11 +1,20 @@
 # USSUS Med
 
-SEO-first dental supplies storefront built with Astro. Astro compiles the pages to static HTML, while small browser-side scripts handle the menu, order-list feedback, and local currency display.
+SEO-first dental supplies storefront built with Astro. Astro compiles the pages to static HTML, while small browser-side scripts handle the menu, quotation list, and local currency display.
+
+## Project layout
+
+- `src/pages/` — English and Arabic routes, redirects, sitemap, and robots rules.
+- `src/components/`, `src/layouts/`, `src/data/`, `src/scripts/`, `src/styles/` — site code and catalogue data.
+- `public/images/` — images used by the live site.
+- `docs/` — operational notes, including the [AdSense launch checklist](docs/adsense.md).
+
+In the local workspace, a separate `project-files/` folder holds retired site art and marketing files. It is outside this Git repository and is not needed to build the site.
 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -27,8 +36,6 @@ The only indexable website URLs are prefixed with a language:
 Each English and Arabic equivalent declares itself as canonical and points to the other version with `hreflang` (`en` and `ar-AE`). The sitemap contains only indexable pages and repeats those language relationships for crawlers. Never add unprefixed public pages; add the page in both locale routes instead.
 
 Unprefixed legacy paths redirect to their English equivalents in `astro.config.mjs`. Configure the production host to honour these as HTTP 301 redirects (including the preferred hostname, `https`, and trailing slash). The static build contains a noindex fallback redirect page for hosts that cannot send HTTP redirects.
-Ussos Med e-commerce and informative and catalogue website
-
 
 ## Quotation workflow
 
