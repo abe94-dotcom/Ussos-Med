@@ -1,86 +1,201 @@
 import { products } from '../data/products.js';
-const key = 'ussus_quote_v1';
-const find = slug => products.find(p => p.slug === slug);
+import { api } from './api.js';
+
+const $ = selector => document.querySelector(selector);
 const lang = document.documentElement.lang.startsWith('ar') ? 'ar' : 'en';
-const displayName = slug => find(slug)?.name || '';
-let basket = [];
-try { const saved = JSON.parse(localStorage.getItem(key) || '[]'); if (Array.isArray(saved)) basket = saved.filter(i => find(i?.slug) && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 999 && typeof i.height === 'string' && typeof i.system === 'string' && i.system.length <= 180 && (i.connection === undefined || typeof i.connection === 'string' && i.connection.length <= 120) && (!find(i.slug).heights.length || find(i.slug).heights.includes(i.height)) && (!find(i.slug).needsSystem || i.system.trim())).map(i => ({ ...i, connection: i.connection || '' })); } catch {}
-const $ = s => document.querySelector(s);
-let timer;
-function announce(text) { $('.cart-toast').textContent = text; $('.cart-toast').classList.add('is-visible'); clearTimeout(timer); timer = setTimeout(() => $('.cart-toast').classList.remove('is-visible'), 4500); }
-function count() { const n = basket.reduce((a,i) => a+i.quantity,0); $('.cart-count').textContent = n; $('.cart-link').setAttribute('aria-label', lang === 'ar' ? `سلة عرض السعر، ${n} منتجات` : `Quote basket, ${n} ${n === 1 ? 'item' : 'items'}`); }
-function save() { localStorage.setItem(key, JSON.stringify(basket)); count(); if ($('#quote-ready')) $('#quote-ready').hidden = true; }
-const currency = $('.currency-selector');
-const rates = { AED: 1, USD: 1 / 3.6725, SAR: 3.75 / 3.6725, QAR: 3.64 / 3.6725, OMR: 1 / 9.538713, JOD: 1 / 5.179831, SYP: 1 / 0.030102, BHD: 1 / 9.741379, KWD: 1 / 11.948918 };
-try { const saved = localStorage.getItem('ussus_currency'); currency.value = Object.hasOwn(rates, saved) ? saved : 'AED'; } catch {}
-function prices() { document.querySelectorAll('[data-price-aed]').forEach(n => { const estimate = currency.value !== 'AED'; n.textContent = (estimate ? '≈ ' : '') + new Intl.NumberFormat('en', {style:'currency',currency:currency.value,currencyDisplay:'code'}).format(Number(n.dataset.priceAed)*rates[currency.value]); }); }
-currency.addEventListener('change', () => { try { localStorage.setItem('ussus_currency',currency.value); } catch {} prices(); }); prices();
-const menu = $('.menu-toggle'), nav = $('.site-nav');
-function close() { menu.setAttribute('aria-expanded','false'); nav.classList.remove('is-open'); menu.querySelector('.sr-only').textContent = 'Open menu'; }
-menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded',String(open)); nav.classList.toggle('is-open',open); menu.querySelector('.sr-only').textContent = open ? 'Close menu' : 'Open menu'; });
-nav.querySelectorAll('a').forEach(a => a.addEventListener('click',close));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.getAttribute('aria-expanded') === 'true') { close(); menu.focus(); } });
+const accountUrl = `/${lang}/account/`;
+const bySlug = new Map(products.map(product => [product.slug, product]));
+let currentUser = null;
+let prices = new Map();
+let currentCart = null;
+const copy = {
+  signIn: lang === 'ar' ? 'سجّل الدخول لعرض الأسعار وإضافة المنتجات' : 'Sign in to view prices and add products',
+  viewPrice: lang === 'ar' ? 'سجّل الدخول لعرض السعر' : 'Sign in to view price',
+  added: lang === 'ar' ? 'تمت إضافة المنتج إلى سلة طلب عرض السعر.' : 'Added to your quote basket.',
+  failed: lang === 'ar' ? 'تعذر حفظ التغيير. حاول مرة أخرى.' : 'Could not save that change. Please try again.',
+};
+const signInLink = next => `${accountUrl}?next=${encodeURIComponent(next || location.pathname)}`;
+
+function refreshGate() {
+  const cartLink = $('.cart-link');
+  if (cartLink) cartLink.href = currentUser ? `/${lang}/quote/` : signInLink(`/${lang}/quote/`);
+  const accountLink = $('.account-link');
+  if (accountLink) {
+    accountLink.textContent = currentUser ? (lang === 'ar' ? 'حسابي' : 'My account') : (lang === 'ar' ? 'دخول / حساب' : 'Sign in / Create account');
+    accountLink.href = accountUrl;
+  }
+  const selector = $('.currency-selector');
+  if (selector) selector.hidden = true;
+  document.querySelectorAll('[data-product-price]').forEach(node => {
+    const amount = currentUser && prices.get(node.dataset.productPrice);
+    node.textContent = amount == null
+      ? (currentUser ? (lang === 'ar' ? 'السعر قيد الإعداد' : 'Price being prepared') : copy.viewPrice)
+      : `AED ${Number(amount).toLocaleString('en')}`;
+    node.classList.toggle('is-price-locked', amount == null);
+  });
+  document.querySelectorAll('.product-order').forEach(form => {
+    const available = Boolean(currentUser && prices.has(form.dataset.slug));
+    form.hidden = !available;
+    let gate = form.parentElement.querySelector('.product-account-gate');
+    if (!gate) {
+      gate = document.createElement('p');
+      gate.className = 'product-account-gate';
+      form.after(gate);
+    }
+    gate.hidden = available;
+    if (!available) {
+      const link = document.createElement('a');
+      link.className = 'button button-primary';
+      link.href = currentUser ? 'mailto:sales@ussusmed.com' : signInLink(location.pathname);
+      link.textContent = currentUser ? (lang === 'ar' ? 'تواصل مع المبيعات لمعرفة السعر' : 'Contact sales for pricing') : copy.signIn;
+      gate.replaceChildren(link);
+    }
+  });
+  const quoteLayout = $('.quote-layout');
+  if (quoteLayout) {
+    quoteLayout.hidden = !currentUser;
+    const gate = $('.quote-account-gate');
+    if (gate) gate.hidden = Boolean(currentUser);
+  }
+}
+
+function announce(message) {
+  const toast = $('.cart-toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('is-visible');
+  window.setTimeout(() => toast.classList.remove('is-visible'), 4200);
+}
+
+async function getCart() {
+  if (!currentUser) return { cart: null, items: [] };
+  const result = await api('cart');
+  currentCart = result.cart;
+  const badge = $('.cart-count');
+  if (badge) badge.textContent = String(result.items.reduce((sum, item) => sum + item.quantity, 0));
+  return result;
+}
+
+document.querySelectorAll('.product-order').forEach(form => form.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!currentUser) { location.assign(signInLink(location.pathname)); return; }
+  const product = bySlug.get(form.dataset.slug);
+  if (!product) return;
+  const values = new FormData(form);
+  const quantity = Number(values.get('quantity'));
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) return;
+  const options = {
+    height: String(values.get('height') || ''),
+    system: String(values.get('system') || '').trim(),
+    connection: String(values.get('connection') || '').trim(),
+  };
+  if (product.needsSystem && !options.system) options.system = 'Please advise';
+  try {
+    await api('add_item', { slug: product.slug, quantity, options });
+    await getCart();
+    announce(copy.added);
+  } catch { announce(copy.failed); }
+}));
+
+async function renderQuotePage() {
+  const list = $('#basket-items');
+  if (!list || !currentUser) return;
+  let result;
+  try { result = await getCart(); } catch { list.textContent = copy.failed; return; }
+  const { items } = result;
+  list.replaceChildren();
+  const quoteForm = $('#quote-form');
+  if (!items.length) {
+    $('#basket-total').textContent = '';
+    list.textContent = lang === 'ar' ? 'السلة فارغة. تصفح المنتجات وأضف ما تحتاجه.' : 'Your basket is empty. Browse products and add the items you need.';
+    if (quoteForm) quoteForm.querySelector('button[type="submit"]').disabled = true;
+    return;
+  }
+  if (items.some(item => !prices.has(item.product_slug))) {
+    list.textContent = lang === 'ar' ? 'تعذر تحميل بعض الأسعار. حاول تحديث الصفحة.' : 'Some prices could not be loaded. Please refresh the page.';
+    if (quoteForm) quoteForm.querySelector('button[type="submit"]').disabled = true;
+    return;
+  }
+  if (quoteForm) quoteForm.querySelector('button[type="submit"]').disabled = false;
+  let total = 0;
+  for (const item of items) {
+    const product = bySlug.get(item.product_slug);
+    if (!product) continue;
+    const price = prices.get(item.product_slug);
+    total += price * item.quantity;
+    const row = document.createElement('article'); row.className = 'basket-row';
+    const name = document.createElement('a'); name.className = 'text-link'; name.href = `/${lang}/products/${product.slug}/`; name.textContent = product.name; name.dir = 'ltr';
+    const detail = document.createElement('p'); detail.textContent = [product.sku, item.options?.height, item.options?.system, item.options?.connection].filter(Boolean).join(' · ');
+    const quantity = document.createElement('label'); quantity.textContent = lang === 'ar' ? 'الكمية' : 'Quantity';
+    const input = document.createElement('input'); Object.assign(input, { type: 'number', min: '1', max: '999', value: String(item.quantity), required: true });
+    input.addEventListener('change', async () => {
+      const amount = Number(input.value); if (!Number.isInteger(amount) || amount < 1 || amount > 999) return;
+      try { await api('update_item', { id: item.id, quantity: amount }); await renderQuotePage(); } catch { announce(copy.failed); }
+    });
+    quantity.append(input);
+    const line = document.createElement('strong'); line.textContent = `AED ${(price * item.quantity).toLocaleString('en')} line total`;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove-button'; remove.textContent = lang === 'ar' ? 'إزالة' : 'Remove';
+    remove.addEventListener('click', async () => {
+      try { await api('remove_item', { id: item.id }); await renderQuotePage(); } catch { announce(copy.failed); }
+    });
+    row.append(name, detail, quantity, line, remove); list.append(row);
+  }
+  $('#basket-total').textContent = `${lang === 'ar' ? 'المجموع الفرعي للمنتجات' : 'Item subtotal'}: AED ${total.toLocaleString('en')}`;
+  if (quoteForm?.elements.email) quoteForm.elements.email.value = currentUser.email;
+}
+
+const quoteForm = $('#quote-form');
+quoteForm?.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!currentUser || !currentCart) return;
+  const values = new FormData(quoteForm);
+  try {
+    await api('submit_quote', { destination: String(values.get('destination') || ''), notes: String(values.get('notes') || '') });
+    $('#form-status').textContent = lang === 'ar' ? 'تم استلام طلب عرض السعر.' : 'Your quote request has been submitted.';
+    quoteForm.hidden = true;
+    await getCart();
+  } catch (error) { $('#form-status').textContent = error.message; }
+});
+
+async function initCommerce() {
+  try {
+    const result = await api('me');
+    currentUser = result.user;
+    if (currentUser) {
+      const priceResult = await api('prices');
+      prices = new Map(priceResult.prices.map(row => [row.product_slug, row.amount_aed]));
+    }
+  } catch { currentUser = null; }
+  refreshGate();
+  if (currentUser) { await getCart(); await renderQuotePage(); }
+}
+
+// Preserve public product discovery: category and text search never depend on sign-in.
 const catalogue = $('[data-catalogue]');
 if (catalogue) {
- const params = new URLSearchParams(location.search);
- const languageSwitch = $('.language-switch');
- if (params.has('q') || params.has('category')) languageSwitch.href += `?${params.toString()}`;
- const query = (params.get('q') || '').trim().slice(0, 120);
- const allowedCategories = [...catalogue.querySelectorAll('[data-category]')].map(group => group.dataset.category);
- const category = allowedCategories.includes(params.get('category')) ? params.get('category') : 'all';
- const queryField = $('#catalogue-query');
- queryField.value = query;
- let visible = 0;
- catalogue.querySelectorAll('[data-category]').forEach(group => {
-  let groupCount = 0;
-  group.querySelectorAll('.catalogue-card').forEach(card => {
-   const matches = (category === 'all' || group.dataset.category === category) && (!query || card.dataset.search.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
-   card.hidden = !matches;
-   if (matches) { visible++; groupCount++; }
+  const params = new URLSearchParams(location.search);
+  const languageSwitch = $('.language-switch');
+  if (languageSwitch && (params.has('q') || params.has('category'))) languageSwitch.href += `?${params.toString()}`;
+  const query = (params.get('q') || '').trim().slice(0, 120);
+  const groups = [...catalogue.querySelectorAll('[data-category]')];
+  const category = groups.some((group) => group.dataset.category === params.get('category')) ? params.get('category') : 'all';
+  const queryField = $('#catalogue-query'); if (queryField) queryField.value = query;
+  let visible = 0;
+  groups.forEach((group) => {
+    let count = 0;
+    group.querySelectorAll('.catalogue-card').forEach((card) => {
+      const matches = (category === 'all' || group.dataset.category === category) && (!query || card.dataset.search.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+      card.hidden = !matches; if (matches) { visible++; count++; }
+    });
+    group.hidden = count === 0;
   });
-  group.hidden = groupCount === 0;
- });
- catalogue.querySelectorAll('[data-category-filter]').forEach(link => {
-  if (link.dataset.categoryFilter === category) link.setAttribute('aria-current', 'true');
- });
- $('#catalogue-result-count').textContent = `${visible} ${catalogue.dataset.locale === 'ar' ? 'منتجات' : visible === 1 ? 'product' : 'products'}`;
- $('#catalogue-empty').hidden = visible !== 0;
+  catalogue.querySelectorAll('[data-category-filter]').forEach((link) => { if (link.dataset.categoryFilter === category) link.setAttribute('aria-current', 'true'); });
+  const resultCount = $('#catalogue-result-count');
+  if (resultCount) resultCount.textContent = `${visible} ${lang === 'ar' ? 'منتجات' : visible === 1 ? 'product' : 'products'}`;
+  const empty = $('#catalogue-empty'); if (empty) empty.hidden = visible !== 0;
 }
-document.querySelectorAll('.product-order').forEach(form => form.addEventListener('submit', e => {
- e.preventDefault(); const d = new FormData(form); const item = {slug:form.dataset.slug,quantity:Number(d.get('quantity')),height:String(d.get('height') || ''),system:String(d.get('system') || '').trim(),connection:String(d.get('connection') || '').trim()}; const p = find(item.slug);
- if (!p || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 999) return;
- if (p.needsSystem && !item.system) item.system = 'Please advise';
- const previous = JSON.stringify(basket); const existing = basket.find(i => i.slug === item.slug && i.height === item.height && i.system === item.system && i.connection === item.connection);
- if (existing && existing.quantity + item.quantity > 999) { announce('Maximum quantity is 999 per configuration. Adjust your basket.'); return; }
- if (existing) existing.quantity += item.quantity; else basket.push(item);
- try { save(); announce(lang === 'ar' ? `تمت إضافة ${displayName(p.slug)}. راجع سلة عرض السعر للمتابعة.` : `${p.name} added. Review your quote basket to continue.`); } catch { basket = JSON.parse(previous); announce('Unable to save the basket. Enable browser storage or email orders@ussusmed.com with your products.'); }
-}));
-$('[name="system"]')?.addEventListener('input',e => e.target.setCustomValidity(''));
-const money = n => new Intl.NumberFormat('en',{style:'currency',currency:'AED',currencyDisplay:'code'}).format(n);
-function el(tag,text,cls) { const n = document.createElement(tag); n.textContent = text; if(cls) n.className=cls; return n; }
-function render() {
- const container = $('#basket-items'); if (!container) return; container.replaceChildren();
- if (!basket.length) container.append(el('p',lang === 'ar' ? 'سلة عرض السعر فارغة. استعرض المنتجات أو اكتب ما تحتاجه في النموذج.' : 'Your basket is empty. Browse the catalogue or describe the products you need in the form.','empty-basket'));
- basket.forEach((i,index) => { const p=find(i.slug), name=displayName(i.slug), row=el('article','','basket-row'), a=el('a',name,'text-link'); a.href=`/${lang}/products/${p.slug}/`; a.dir='ltr'; row.append(a,el('p',[p.sku,i.height,i.system,i.connection].filter(Boolean).join(' · ')));
- const label=el('label',lang === 'ar' ? 'الكمية' : 'Quantity'), input=el('input',''); Object.assign(input,{type:'number',min:'1',max:'999',step:'1',value:String(i.quantity),required:true}); input.setAttribute('aria-label',`${lang === 'ar' ? 'الكمية لـ' : 'Quantity for'} ${name} ${i.height}`);
- input.addEventListener('change',()=>{if(!input.checkValidity()){input.reportValidity();input.value=String(i.quantity);return;} const old=i.quantity;i.quantity=Number(input.value);try{save();}catch{i.quantity=old;announce('Could not save changes. Check browser storage.');} render();container.querySelectorAll('input')[index]?.focus();}); label.append(input);row.append(label,el('strong',lang === 'ar' ? `إجمالي الصنف ${money(p.price*i.quantity)}` : `${money(p.price*i.quantity)} line total`));
- const remove=el('button',lang === 'ar' ? 'إزالة' : 'Remove','remove-button');remove.type='button';remove.setAttribute('aria-label',`${lang === 'ar' ? 'إزالة' : 'Remove'} ${name} ${i.height}`);remove.addEventListener('click',()=>{const previous=[...basket];basket.splice(index,1);try{save();announce(lang === 'ar' ? `تمت إزالة ${name}.` : `${name} removed.`);}catch{basket=previous;announce('Could not save changes. Check browser storage.');}render();(container.querySelectorAll('.remove-button')[Math.min(index,basket.length-1)] || $('#quote-form input')).focus();});row.append(remove);container.append(row);
- });
- $('#basket-total').textContent=basket.length?`${lang === 'ar' ? 'المجموع الفرعي للمنتجات' : 'Item subtotal'}: ${money(basket.reduce((a,i)=>a+find(i.slug).price*i.quantity,0))}`:'';
-}
-let download;
-const form=$('#quote-form');
-if (form && new URLSearchParams(location.search).get('topic') === 'scanner-demo') {
- form.elements.notes.value = 'I would like to book an intraoral scanner demonstration. Please contact me to arrange a time.';
-}
-form?.addEventListener('input',()=>{$('#quote-ready').hidden=true;});
-form?.addEventListener('submit',e=>{
- e.preventDefault();const d=new FormData(form);if(!basket.length&&!String(d.get('notes')).trim()){$('#form-status').textContent=lang === 'ar' ? 'أضف منتجاً أو صف ما تحتاجه في حقل المتطلبات الإضافية.' : 'Add a product or describe what you need in Additional requirements.';form.elements.notes.focus();return;}$('#form-status').textContent='';
- const lines=basket.map(i=>`${i.quantity} × ${find(i.slug).name} (${find(i.slug).sku})${i.height?` | Height: ${i.height}`:''}${i.system?` | Implant system: ${i.system}`:''}${i.connection?` | Platform/connection: ${i.connection}`:''} | ${money(find(i.slug).price)} ${find(i.slug).unit}`);
- const body=`Hello USSUS Med,\n\nPlease prepare a quotation for:\n${lines.length?lines.join('\n'):'See requirements below.'}\n\nName: ${d.get('name')}\nEmail: ${d.get('email')}${d.get('clinic')?`\nClinic/company: ${d.get('clinic')}`:''}${d.get('destination')?`\nDelivery city and country: ${d.get('destination')}`:''}\n\nAdditional requirements:\n${d.get('notes')||'None'}\n\nPlease confirm availability, compatibility, final AED prices, taxes, shipping charges and delivery timing.\n\nThank you.`;
- $('#quote-preview').value=body;$('#email-quote').href=`mailto:orders@ussusmed.com?subject=USSUS%20Med%20quote%20request&body=${encodeURIComponent(body)}`;
- if(download)URL.revokeObjectURL(download);download=URL.createObjectURL(new Blob([body],{type:'text/plain;charset=utf-8'}));$('#download-quote').href=download;$('#copy-status').textContent='';$('#quote-ready').hidden=false;$('#quote-ready').focus();$('#quote-ready').scrollIntoView({block:'start'});
- window.location.href=$('#email-quote').href;
-});
-$('#copy-quote')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#quote-preview').value);$('#copy-status').textContent=lang === 'ar' ? 'تم النسخ. الصق الطلب في رسالة بريد وأرسله إلى orders@ussusmed.com.' : 'Copied. Paste into your email and send to orders@ussusmed.com.';}catch{$('#quote-preview').focus();$('#quote-preview').select();$('#copy-status').textContent=lang === 'ar' ? 'انسخ النص المحدد أو استخدم تنزيل الطلب.' : 'Copy the selected text or use Download request.';}});
-count();render();
+
+const menu = $('.menu-toggle'); const nav = $('.site-nav');
+menu?.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); nav?.classList.toggle('is-open', open); });
+
+initCommerce();

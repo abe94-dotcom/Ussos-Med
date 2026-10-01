@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { locales } from '../../data/i18n.js';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const { locale } = Astro.params;
+---
+<BaseLayout locale={locale} title="Sales workspace | USSUS Med" description="USSUS Med quotation workspace." noindex={true}>
+  <section class="shell quote-page staff-page">
+    <p class="kicker">USSUS Med · Staff</p>
+    <h1>Quotation requests.</h1>
+    <p id="staff-status" role="status">Checking access…</p>
+    <div id="staff-workspace" hidden>
+      <div id="staff-queue" class="staff-queue"></div>
+      <section id="staff-prices" class="staff-prices" hidden><h2>Catalogue prices</h2><p>Only administrators can change prices. Amounts are in AED and visible to signed-in customers.</p><div id="staff-price-list"></div></section>
+    </div>
+  </section>
+  <script>import '../../scripts/staff.js';</script>
+</BaseLayout>

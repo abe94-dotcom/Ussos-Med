@@ -1,6 +1,6 @@
 # USSUS Med
 
-SEO-first dental supplies storefront built with Astro. Astro compiles the pages to static HTML, while small browser-side scripts handle the menu, quotation list, and local currency display.
+Dental supplies storefront built with Astro. English and Arabic catalogue pages remain public. Account holders can view AED prices, save a quote basket, and submit requests through Cloudflare Pages Functions and D1.
 
 ## Project layout
 
@@ -13,7 +13,7 @@ In the local workspace, a separate `project-files/` folder holds retired site ar
 
 See [repository rules](AGENTS.md) for what belongs in Git and the checks to make before publishing.
 
-The staged path from the current quotation storefront to accounts and possible direct ordering is in the [storefront plan](docs/commerce-roadmap.md).
+The backend setup and remaining launch requirements are in [backend setup](docs/backend-setup.md). The staged commerce direction is in the [storefront plan](docs/commerce-roadmap.md).
 
 ## Run locally
 
@@ -28,9 +28,9 @@ npm run dev
 npm run build
 ```
 
-The deployable site is generated in `dist/`. Product prices use AED as their source currency; the browser can display the configured regional currencies for reference, but the final Zoho invoice should remain in AED.
+The deployable site is generated in `dist/`. Product prices are stored in Postgres and read only after sign-in. AED is the display and billing currency.
 
-Product names always use the English catalogue names in both languages. Arabic routes translate the surrounding interface, categories, and descriptions. Generated quote emails and future customer documents use English.
+Product names always use the English catalogue names in both languages. Arabic routes translate the surrounding interface, categories, and descriptions. Staff quotations and customer documents use English.
 
 ## Public URL policy
 
@@ -45,6 +45,6 @@ Unprefixed legacy paths redirect to their English equivalents in `astro.config.m
 
 ## Quotation workflow
 
-Product options and quantities are saved in the browser under `ussus_quote_v1`. The `/en/quote/` and `/ar/quote/` pages support quantity changes, removal, item subtotals and an email request preview. Contact details are not saved in local storage. Submitting the form opens a prepared draft in the visitor’s email app; the visitor must send it there. Copy and text-download options remain available when email-app handoff is unavailable. Generated quote emails use English in both site languages. No server-side submission or delivery confirmation is configured.
+Visitors can browse without signing in. Account holders can view prices, add products to a persistent quote basket, and submit a quote request. Staff can review submitted requests and maintain quoted unit prices in the staff workspace. Account creation, prices, carts, and quote requests require a Cloudflare Pages deployment with a D1 database bound as `DB` and the schema in `migrations/`.
 
-AED is the billing currency. Other currencies use fixed reference conversions and are explicitly labelled estimates. Availability, compatibility, tax, shipping and delivery timing require confirmation in the quotation. Replace these statements with verified operational information when available.
+Sales contact: `sales@ussusmed.com`; WhatsApp: `+971 50 276 8276`. Availability, compatibility, tax, shipping, and delivery timing still require staff confirmation. Quote submission does not place an order or collect payment.

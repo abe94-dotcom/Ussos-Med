@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { locales, copy, localePath } from '../../data/i18n.js';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const { locale } = Astro.params;
+const ar = locale === 'ar';
+const t = copy[locale];
+---
+<BaseLayout locale={locale} title={ar ? 'حساب العميل | يوسس ميد' : 'Customer account | USSUS Med'} description={ar ? 'أنشئ حساباً لعرض الأسعار وطلب عروض الأسعار.' : 'Create an account to view prices and request quotations.'} noindex={true}>
+  <section class="shell quote-page account-page">
+    <p class="kicker">{ar ? 'حساب العيادة' : 'Clinic account'}</p>
+    <h1>{ar ? 'الأسعار وطلباتك، في مكان واحد.' : 'Prices and quote requests, in one place.'}</h1>
+    <p class="detail-intro">{ar ? 'تصفّح الكتالوج متاح للجميع. أنشئ حساباً أو سجّل الدخول لعرض الأسعار وإدارة سلة طلب عرض السعر.' : 'Anyone can browse the catalogue. Create an account or sign in to see prices and manage your quote basket.'}</p>
+    <div class="account-layout">
+      <section id="account-dashboard" class="account-benefits" hidden>
+        <h2>{ar ? 'حسابي' : 'My account'}</h2>
+        <p id="account-email"></p>
+        <h3>{ar ? 'طلبات عروض الأسعار السابقة' : 'Your quote requests'}</h3>
+        <div id="account-quotes"></div>
+        <p><a class="button button-primary" href={localePath(locale, '/quote/')}>{ar ? 'سلة طلب عرض السعر' : 'Open quote basket'}</a></p>
+        <button id="account-signout" class="text-link" type="button">{ar ? 'تسجيل الخروج' : 'Sign out'}</button>
+      </section>
+      <form id="account-form" class="account-form">
+        <h2 id="account-heading">{ar ? 'إنشاء حساب' : 'Create your account'}</h2>
+        <label id="full-name-field">{ar ? 'الاسم الكامل' : 'Full name'}<input name="full_name" autocomplete="name" maxlength="120" required /></label>
+        <label id="clinic-field">{ar ? 'اسم العيادة أو الشركة' : 'Clinic or company'}<input name="clinic_name" autocomplete="organization" maxlength="180" required /></label>
+        <label>{ar ? 'البريد الإلكتروني' : 'Email address'}<input name="email" type="email" autocomplete="email" maxlength="254" required /></label>
+        <label>{ar ? 'كلمة المرور' : 'Password'}<input name="password" type="password" autocomplete="new-password" minlength="10" required /></label>
+        <p class="pricing-note">{ar ? 'استخدم بريداً إلكترونياً يمكنك الوصول إليه. سيتواصل فريق المبيعات معك عبره بخصوص عروض الأسعار.' : 'Use an email address you can access. Our sales team will use it to reply to your quote requests.'}</p>
+        <button class="button button-primary" type="submit">{ar ? 'إنشاء حساب' : 'Create account'}</button>
+        <p id="account-status" role="status" aria-live="polite"></p>
+        <p><button class="text-link account-toggle" type="button">{ar ? 'لديك حساب؟ سجّل الدخول' : 'Already have an account? Sign in'}</button></p>
+      </form>
+      <aside class="account-benefits"><h2>{ar ? 'مزايا الحساب' : 'With an account'}</h2><ul><li>{ar ? 'عرض أسعار المنتجات بالدرهم الإماراتي' : 'See product prices in AED'}</li><li>{ar ? 'حفظ سلة المنتجات على حسابك' : 'Keep your quote basket saved to your account'}</li><li>{ar ? 'إرسال طلب عرض سعر ومتابعته' : 'Submit and follow your quote requests'}</li></ul><a class="text-link" href={localePath(locale, '/products/')}>{ar ? 'تابع تصفح المنتجات ←' : 'Keep browsing products →'}</a></aside>
+    </div>
+  </section>
+  <script>import '../../scripts/account.js';</script>
+</BaseLayout>

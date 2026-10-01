@@ -10,9 +10,9 @@ The July 2026 full-stack starter is a source of feature ideas, not a replacement
 
 - The homepage now leads with the wider clinic and lab catalogue while retaining the existing visual design and featured scanner.
 - English and Arabic category cards open filtered catalogue views. Catalogue search accepts product names and SKUs; implant product forms capture height, system, and optional platform/connection details in the quote basket.
-- The quote flow now opens a prepared email draft in the visitor's email app after two required contact fields; the visitor still has to send it. A real receiving service, stored staff queue, and delivery confirmation remain the next implementation step. The destination and hosting choice must be settled before enabling submission.
+- Account and quotation implementation is underway. Public product pages omit prices. Cloudflare Pages Functions and D1 provide account sessions, private prices, persistent baskets, a staff queue, and stored requests with no additional runtime package. The Cloudflare project and database must be provisioned before launch.
 - English is the language for all generated quote emails, staff quotations, receipts, and customer communications, including requests started from the Arabic website.
-- Catalogue management, clinic accounts, and direct checkout remain later stages with the operational prerequisites below.
+- Clinic accounts are now required to view prices, add items to a basket, and request a quotation. Public browsing remains available. Direct checkout remains a later stage with the operational prerequisites below.
 
 ## Stage 1 — Better product discovery and quote requests
 
@@ -27,7 +27,7 @@ The July 2026 full-stack starter is a source of feature ideas, not a replacement
 
 1. Move product, variant, SKU, price, image, and availability data into an admin-managed catalogue. Keep stable, indexable English and Arabic product URLs and complete translations when the data source changes.
 2. Add staff controls for product visibility, variant prices, and stock/status, with audit history and role-based access. Display stock to customers only when inventory updates are reliable; otherwise show an availability enquiry.
-3. Add optional clinic accounts after the guest quote flow works. Collect only details needed for trade verification and fulfillment, verify email, and have staff approve any account that receives trade pricing or direct ordering. Guest quote requests should remain possible.
+3. Require clinic accounts before showing prices or allowing quote-basket actions. Verify email and collect only details needed for correspondence and fulfillment. Add staff approval only if the business later decides to restrict trade pricing beyond basic account creation.
 4. Give staff an order/quote dashboard and a small weekly report for request volume, orders, and low-stock SKUs. Define the metrics before treating them as revenue reporting.
 
 **Ready when:** staff can update a product and variant without editing code, the English and Arabic pages stay in sync, and account permissions are enforced on the server.
